@@ -1,0 +1,14 @@
+<div style="padding: 20px; max-width: 800px; margin: 0 auto;">
+  <h1>🔒 Admin Dashboard</h1>
+
+  <div *ngIf="error" style="background: #ffebee; color: #c62828; padding: 15px; border-radius: 5px; margin: 20px 0;">
+    <p>{{ error }}</p>
+  </div>
+
+  <div *ngIf="adminData" style="background: #e8f5e9; padding: 15px; border-radius: 5px; margin: 20px 0;">
+    <h3>Admin Backend Válasz:</h3>
+    <pre>{{ adminData | json }}</pre>
+  </div>
+
+  <p style="color: #666;">Ez az oldal csak ADMIN szerepkörrel rendelkező felhasználóknak érhető el.</p>
+</div>

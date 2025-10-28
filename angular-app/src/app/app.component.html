@@ -1,0 +1,30 @@
+<nav style="background: #1976d2; color: white; padding: 15px;">
+  <div style="max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
+    <h2 style="margin: 0;">{{ title }}</h2>
+
+    <div style="display: flex; gap: 15px; align-items: center;">
+      <a routerLink="/" style="color: white; text-decoration: none;">Kezdőlap</a>
+
+      <a *ngIf="isLoggedIn" routerLink="/profile" style="color: white; text-decoration: none;">
+        Profil
+      </a>
+
+      <a *ngIf="isAdmin" routerLink="/admin" style="color: white; text-decoration: none;">
+        Admin
+      </a>
+
+      <span *ngIf="isLoggedIn" style="color: #bbdefb;">
+        {{ username }}
+      </span>
+
+      <button *ngIf="isLoggedIn" (click)="logout()"
+              style="padding: 8px 15px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        Kijelentkezés
+      </button>
+    </div>
+  </div>
+</nav>
+
+<main style="min-height: calc(100vh - 70px);">
+  <router-outlet></router-outlet>
+</main>

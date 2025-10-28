@@ -1,0 +1,12 @@
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://localhost:8443/realms/biometric-2fa
+          jwk-set-uri: https://localhost:8443/realms/biometric-2fa/protocol/openid-connect/certs
+
+logging:
+  level:
+    org.springframework.security: INFO
+    org.springframework.web.cors: WARN

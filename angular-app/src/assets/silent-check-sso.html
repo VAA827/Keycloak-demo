@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Silent SSO Check</title>
+</head>
+<body>
+<script>
+    if (parent !== window) {
+    parent.postMessage(location.href, location.origin);
+  } (function() {
+    try {
+      var referrer = document.referrer;
+      if (referrer) {
+        var parentOrigin = new URL(referrer).origin;
+        // Only send a status message, not the full URL (to avoid leaking tokens)
+        parent.postMessage({ type: 'sso-check', status: 'success' }, parentOrigin);
+      }
+    } catch (e) {
+      // Optionally handle error (e.g., log or fallback)
+    }
+  })();
+</script>
+</body>
+</html>
+

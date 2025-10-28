@@ -1,0 +1,138 @@
+# Keycloak Project - Git Ignore
+
+# ==========================================
+# SSL Certificates (Biztonsági okokból)
+# ==========================================
+certs/*.p12
+certs/*.pem
+certs/*.key
+certs/*.csr
+certs/*.pfx
+certs/*.jks
+
+# De megtartjuk a dokumentációt és a könyvtár struktúrát
+!certs/README.md
+!certs/.gitkeep
+
+# ==========================================
+# Keycloak Backups (Érzékeny adatok)
+# ==========================================
+keycloak-backup/*.json
+keycloak-backup/*.sql
+keycloak-backup/*.yaml
+keycloak-backup/*.yml
+keycloak-backup/*-backup-*
+keycloak-backup/BACKUP-INFO-*
+keycloak-backup/docs-backup-*
+keycloak-backup/angular-config/
+
+# Eredeti template megtartása (ha van)
+!keycloak-backup/biometric-2fa-realm-TEMPLATE.json
+!keycloak-backup/README.md
+
+# ==========================================
+# Docker Volumes & Data
+# ==========================================
+postgres_data/
+keycloak_data/
+
+# ==========================================
+# Node Modules & Dependencies
+# ==========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ==========================================
+# Angular
+# ==========================================
+angular-app/dist/
+angular-app/.angular/
+angular-app/tmp/
+angular-app/out-tsc/
+angular-app/coverage/
+
+# ==========================================
+# IDE & Editor
+# ==========================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# Environment & Config
+# ==========================================
+.env
+.env.local
+.env.*.local
+*.local
+
+# ==========================================
+# Logs
+# ==========================================
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+
+# ==========================================
+# Backup & Temporary Files
+# ==========================================
+*.bak
+*.backup
+*.old
+*.tmp
+*-backup-*
+*-BACKUP-*
+
+# ==========================================
+# Compiled & Build
+# ==========================================
+*.class
+*.jar
+*.war
+target/
+build/
+dist/
+
+# ==========================================
+# OS Generated
+# ==========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ==========================================
+# Java & Maven
+# ==========================================
+backend/target/
+backend/.mvn/
+backend/mvnw
+backend/mvnw.cmd
+
+# ==========================================
+# Sensitive Data (FONTOS!)
+# ==========================================
+# Ne commitolj jelszavakat, API kulcsokat, stb.
+secrets/
+*.secret
+*.credentials
+*-credentials.json
+.env.production
+
+# ==========================================
+# Megjegyzések
+# ==========================================
+# Ha új érzékeny fájlt adsz hozzá a projekthez,
+# add hozzá ezt a listához is!

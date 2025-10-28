@@ -1,0 +1,23 @@
+<div style="padding: 20px; max-width: 800px; margin: 0 auto;">
+  <h1>Keycloak Demo - Kezdőlap</h1>
+
+  <div style="background: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0;">
+    <h3>Publikus üzenet a backend-től:</h3>
+    <p>{{ publicMessage || 'Betöltés...' }}</p>
+  </div>
+
+  <div *ngIf="!isLoggedIn" style="margin: 20px 0;">
+    <h3>Még nem vagy bejelentkezve</h3>
+    <button (click)="login()" style="padding: 10px 20px; font-size: 16px; cursor: pointer;">
+      Bejelentkezés
+    </button>
+  </div>
+
+  <div *ngIf="isLoggedIn" style="margin: 20px 0;">
+    <h3>Üdvözöllek, {{ username }}!</h3>
+    <p>Sikeresen bejelentkeztél a Keycloak segítségével.</p>
+    <button (click)="logout()" style="padding: 10px 20px; font-size: 16px; cursor: pointer; background: #dc3545; color: white; border: none; border-radius: 4px;">
+      Kijelentkezés
+    </button>
+  </div>
+</div>

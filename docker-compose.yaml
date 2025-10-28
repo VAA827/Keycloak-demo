@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: keycloak-postgres
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - keycloak-network
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.0
+    container_name: keycloak
+    command:
+      - start
+      - --https-key-store-file=/opt/keycloak/conf/keycloak.p12
+      - --https-key-store-password=test
+      - --features=preview
+      - --import-realm
+    environment:
+      KC_HOSTNAME: localhost
+      KC_HTTPS_PORT: 8443
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin123
+      # PostgreSQL Database konfiguráció
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak_password
+      KC_DB_SCHEMA: public
+      # Performance és cache beállítások
+      KC_HEALTH_ENABLED: true
+      KC_METRICS_ENABLED: true
+      # Logging
+      KC_LOG_LEVEL: INFO
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./certs/keycloak.p12:/opt/keycloak/conf/keycloak.p12:ro
+      # Realm import directory
+      - ./keycloak-backup:/opt/keycloak/data/import
+    depends_on:
+      - postgres
+    networks:
+      - keycloak-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  keycloak-network:
+    driver: bridge
