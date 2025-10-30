@@ -45,26 +45,20 @@ export class HomeComponent implements OnInit {
 
   async loadUserInfo(): Promise<void> {
     try {
-      await this.keycloak.loadUserProfile();
-      this.username = this.keycloak.getUsername();
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.warn('Nem sikerült a felhasználói profil betöltése:', error);
-      try {
-        const keycloakInstance = this.keycloak.getKeycloakInstance();
-        if (keycloakInstance.tokenParsed) {
-          this.username = keycloakInstance.tokenParsed['preferred_username'] ||
-            keycloakInstance.tokenParsed['name'] ||
-            keycloakInstance.tokenParsed['sub'] ||
-            'Felhasználó';
-        } else {
-          this.username = 'Token hiányzik';
-        }
-      } catch (innerError) {
-        this.username = 'Hiba történt';
-        // eslint-disable-next-line no-console
-        console.error('Hiba a felhasználói adatok betöltésekor:', innerError);
+      // Közvetlenül a tokenből olvassuk ki az adatokat (CORS probléma elkerülése)
+      const keycloakInstance = this.keycloak.getKeycloakInstance();
+      if (keycloakInstance.tokenParsed) {
+        this.username = keycloakInstance.tokenParsed['preferred_username'] ||
+          keycloakInstance.tokenParsed['name'] ||
+          keycloakInstance.tokenParsed['sub'] ||
+          'Felhasználó';
+      } else {
+        this.username = 'Token hiányzik';
       }
+    } catch (error) {
+      this.username = 'Hiba történt';
+      // eslint-disable-next-line no-console
+      console.error('Hiba a felhasználói adatok betöltésekor:', error);
     }
   }
 

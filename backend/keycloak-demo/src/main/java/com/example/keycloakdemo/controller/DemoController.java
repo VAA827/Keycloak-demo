@@ -21,7 +21,7 @@ public class DemoController {
     }
 
     @GetMapping("/user/profile")
-    @PreAuthorize("hasRole('USER')")
+    // Nincs @PreAuthorize - csak bejelentkezés kell, nincs role követelmény
     public Map<String, Object> userProfile(Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Sikeres hitelesítés!");

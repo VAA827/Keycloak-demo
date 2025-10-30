@@ -47,35 +47,33 @@ export class AppComponent implements OnInit {
     console.log('APP: Loading user info...');
 
     try {
-      // MÓDSZER 1: loadUserProfile + getUsername
-      await this.keycloak.loadUserProfile();
-      this.username = this.keycloak.getUsername();
-      this.isAdmin = this.keycloak.isUserInRole('ADMIN');
-      console.log('APP: Username =', this.username, '| isAdmin =', this.isAdmin);
-    } catch (error) {
-      console.warn('APP: Method 1 failed, trying token method...', error);
+      // Közvetlenül a tokenből olvassuk ki az adatokat (CORS probléma elkerülése)
+      const keycloakInstance = this.keycloak.getKeycloakInstance();
+      if (keycloakInstance.tokenParsed) {
+        const token = keycloakInstance.tokenParsed as any;
 
-      // MÓDSZER 2: Token alapján (fallback)
-      try {
-        const keycloakInstance = this.keycloak.getKeycloakInstance();
-        if (keycloakInstance.tokenParsed) {
-          const token = keycloakInstance.tokenParsed as any;
-          this.username = token.preferred_username || token.name || 'Felhasználó';
+        // Username betöltése
+        this.username = token.preferred_username || token.name || token.email || 'Felhasználó';
 
-          const realmAccess = token.realm_access;
-          this.isAdmin = realmAccess?.roles?.includes('ADMIN') || false;
+        // Admin role ellenőrzése
+        const realmAccess = token.realm_access;
+        this.isAdmin = realmAccess?.roles?.includes('ADMIN') || false;
 
-          console.log('APP: Username from token =', this.username, '| isAdmin =', this.isAdmin);
-        } else {
-          console.error('APP: No token available');
-          this.username = '';
-          this.isAdmin = false;
-        }
-      } catch (tokenError) {
-        console.error('APP: Token method also failed:', tokenError);
-        this.username = '';
+        console.log('APP: User loaded from token:');
+        console.log('  - Username:', this.username);
+        console.log('  - Email:', token.email);
+        console.log('  - Name:', token.name);
+        console.log('  - Roles:', realmAccess?.roles);
+        console.log('  - Is Admin:', this.isAdmin);
+      } else {
+        console.error('APP: No token available');
+        this.username = 'Felhasználó';
         this.isAdmin = false;
       }
+    } catch (error) {
+      console.error('APP: Failed to load user info:', error);
+      this.username = 'Felhasználó';
+      this.isAdmin = false;
     }
   }
 

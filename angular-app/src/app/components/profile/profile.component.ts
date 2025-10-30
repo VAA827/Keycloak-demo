@@ -29,32 +29,21 @@ export class ProfileComponent implements OnInit {
 
   async loadUserInfo() {
     try {
-      // MÓDSZER 1: Explicit profile betöltés
-      try {
-        await this.keycloak.loadUserProfile();
-        this.username = this.keycloak.getUsername();
-        this.roles = this.keycloak.getUserRoles();
-
-        const userProfile = await this.keycloak.loadUserProfile();
-        this.email = userProfile.email || 'Nem elérhető';
-
-        console.log('PROFILE: User info (method 1) loaded');
-        return;
-      } catch (error) {
-        console.warn('PROFILE: Method 1 failed, trying method 2...');
-      }
-
-      // MÓDSZER 2: Token alapján (fallback)
+      // Közvetlenül a tokenből olvassuk ki az adatokat (CORS probléma elkerülése)
       const keycloakInstance = this.keycloak.getKeycloakInstance();
       if (keycloakInstance.tokenParsed) {
         const token = keycloakInstance.tokenParsed as any;
+
         this.username = token.preferred_username || token.name || 'Nem elérhető';
         this.email = token.email || 'Nem elérhető';
 
         const realmAccess = token.realm_access;
         this.roles = realmAccess?.roles || [];
 
-        console.log('PROFILE: User info (method 2) loaded');
+        console.log('PROFILE: User info loaded from token:');
+        console.log('  - Username:', this.username);
+        console.log('  - Email:', this.email);
+        console.log('  - Roles:', this.roles);
       } else {
         console.error('PROFILE: No token available');
         this.username = 'Nem elérhető';
