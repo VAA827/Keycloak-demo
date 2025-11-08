@@ -2,6 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { KeycloakService } from 'keycloak-angular';
 import { ApiService } from '../../services/api.service';
+import { UserService } from '../../services/user.service';
+import { LoggerService } from '../../services/logger.service';
+import { LOG_PREFIXES, DEFAULT_VALUES } from '../../constants/app.constants';
 
 @Component({
   selector: 'app-home',
@@ -11,13 +14,15 @@ import { ApiService } from '../../services/api.service';
   styleUrl: './home.component.scss'
 })
 export class HomeComponent implements OnInit {
-  isLoggedIn: boolean = false;
-  username: string = '';
-  publicMessage: string = '';
+  isLoggedIn = false;
+  username = '';
+  publicMessage = '';
 
   constructor(
     private readonly keycloak: KeycloakService,
-    private readonly apiService: ApiService
+    private readonly apiService: ApiService,
+    private readonly userService: UserService,
+    private readonly logger: LoggerService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -27,38 +32,26 @@ export class HomeComponent implements OnInit {
 
   async checkLoginStatus(): Promise<void> {
     try {
-      const loggedIn: boolean = await this.keycloak.isLoggedIn();
-      this.isLoggedIn = loggedIn;
-      if (loggedIn) {
-        await this.loadUserInfo();
+      this.isLoggedIn = await this.userService.isLoggedIn();
+      if (this.isLoggedIn) {
+        this.loadUserInfo();
       } else {
         this.username = '';
       }
     } catch (error) {
+      this.logger.error('Hiba a bejelentkezési állapot ellenőrzésekor:', error);
       this.isLoggedIn = false;
       this.username = '';
-      // Hibát naplózunk Sonar miatt
-      // eslint-disable-next-line no-console
-      console.error('Hiba a bejelentkezési állapot ellenőrzésekor:', error);
     }
   }
 
-  async loadUserInfo(): Promise<void> {
+  private loadUserInfo(): void {
     try {
-      // Közvetlenül a tokenből olvassuk ki az adatokat (CORS probléma elkerülése)
-      const keycloakInstance = this.keycloak.getKeycloakInstance();
-      if (keycloakInstance.tokenParsed) {
-        this.username = keycloakInstance.tokenParsed['preferred_username'] ||
-          keycloakInstance.tokenParsed['name'] ||
-          keycloakInstance.tokenParsed['sub'] ||
-          'Felhasználó';
-      } else {
-        this.username = 'Token hiányzik';
-      }
+      const userInfo = this.userService.getUserInfoFromToken();
+      this.username = userInfo.username;
     } catch (error) {
-      this.username = 'Hiba történt';
-      // eslint-disable-next-line no-console
-      console.error('Hiba a felhasználói adatok betöltésekor:', error);
+      this.logger.error('Hiba a felhasználói adatok betöltésekor:', error);
+      this.username = DEFAULT_VALUES.ERROR_USERNAME;
     }
   }
 
@@ -71,8 +64,7 @@ export class HomeComponent implements OnInit {
         },
         error: (err) => {
           this.publicMessage = 'Nem sikerült betölteni az üzenetet';
-          // eslint-disable-next-line no-console
-          console.error('Hiba a publikus üzenet betöltésekor:', err);
+          this.logger.error('Hiba a publikus üzenet betöltésekor:', err);
           resolve();
         }
       });
@@ -85,8 +77,7 @@ export class HomeComponent implements OnInit {
         redirectUri: window.location.origin
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Bejelentkezési hiba:', error);
+      this.logger.error('Bejelentkezési hiba:', error);
     }
   }
 
@@ -94,8 +85,7 @@ export class HomeComponent implements OnInit {
     try {
       await this.keycloak.logout(window.location.origin);
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Kijelentkezési hiba:', error);
+      this.logger.error('Kijelentkezési hiba:', error);
     }
   }
 }

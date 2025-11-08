@@ -1,24 +1,26 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
+import { AdminData, ProfileData, PublicMessage } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
-  private apiUrl = 'http://localhost:8081/api';
+  private readonly apiUrl = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 
-  getPublicMessage(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/public/hello`);
+  getPublicMessage(): Observable<PublicMessage> {
+    return this.http.get<PublicMessage>(`${this.apiUrl}/public/hello`);
   }
 
-  getUserProfile(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/user/profile`);
+  getUserProfile(): Observable<ProfileData> {
+    return this.http.get<ProfileData>(`${this.apiUrl}/user/profile`);
   }
 
-  getAdminDashboard(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/admin/dashboard`);
+  getAdminDashboard(): Observable<AdminData> {
+    return this.http.get<AdminData>(`${this.apiUrl}/admin/dashboard`);
   }
 }

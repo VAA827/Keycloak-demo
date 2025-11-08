@@ -72,6 +72,7 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+.env.prod
 *.local
 
 # ==========================================

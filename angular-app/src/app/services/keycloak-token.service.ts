@@ -1,14 +1,18 @@
 import { Injectable } from '@angular/core';
 import { KeycloakService } from 'keycloak-angular';
+import { LoggerService } from './logger.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class KeycloakTokenService {
-  private refreshInterval: any;
+  private refreshInterval: ReturnType<typeof setInterval> | null = null;
   private readonly MIN_TOKEN_VALIDITY = 30; // Token lejárat előtt 30 másodperccel frissítünk
 
-  constructor(private keycloak: KeycloakService) {}
+  constructor(
+    private keycloak: KeycloakService,
+    private logger: LoggerService
+  ) {}
 
   /**
    * Elindítja az automatikus token frissítést
@@ -49,10 +53,10 @@ export class KeycloakTokenService {
       const refreshed = await keycloakInstance.updateToken(this.MIN_TOKEN_VALIDITY);
 
       if (refreshed) {
-        console.info('Token successfully refreshed');
+        this.logger.log('🔄 Token successfully refreshed');
       }
     } catch (error) {
-      console.error('Failed to refresh token:', error);
+      this.logger.error('Failed to refresh token:', error);
       // Ha a token frissítés sikertelen, kijelentkeztetjük a felhasználót
       await this.keycloak.logout();
     }
@@ -67,7 +71,7 @@ export class KeycloakTokenService {
       const keycloakInstance = this.keycloak.getKeycloakInstance();
       return await keycloakInstance.updateToken(this.MIN_TOKEN_VALIDITY);
     } catch (error) {
-      console.error('Manual token refresh failed:', error);
+      this.logger.error('Manual token refresh failed:', error);
       throw error;
     }
   }

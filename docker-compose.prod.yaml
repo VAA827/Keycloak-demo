@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: keycloak-postgres-prod
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      # FIGYELEM: Változtasd meg erős jelszóra!
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-CHANGE_THIS_PASSWORD}
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - keycloak-network
+    restart: unless-stopped
+    # Production hardening
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.0
+    container_name: keycloak-prod
+    command:
+      - start
+      - --https-key-store-file=/opt/keycloak/conf/keycloak.p12
+      - --https-key-store-password=${KEYSTORE_PASSWORD:-CHANGE_THIS_PASSWORD}
+      - --features=preview
+      - --import-realm
+      # Production optimization
+      - --http-enabled=false
+      - --hostname-strict=true
+      - --hostname-strict-https=true
+    environment:
+      # FIGYELEM: Változtasd meg a domain névre!
+      KC_HOSTNAME: ${KC_HOSTNAME:-keycloak.yourdomain.com}
+      KC_HOSTNAME_STRICT: true
+      KC_HOSTNAME_STRICT_HTTPS: true
+      KC_HTTPS_PORT: 8443
+      KC_HTTP_ENABLED: false
+
+      # FIGYELEM: Változtasd meg az admin jelszót!
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-CHANGE_THIS_PASSWORD}
+
+      # PostgreSQL Database konfiguráció
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${DB_PASSWORD:-CHANGE_THIS_PASSWORD}
+      KC_DB_SCHEMA: public
+
+      # Production performance settings
+      KC_HEALTH_ENABLED: true
+      KC_METRICS_ENABLED: true
+      KC_CACHE: ispn
+      KC_CACHE_STACK: kubernetes
+
+      # Production logging (WARN level)
+      KC_LOG_LEVEL: WARN
+      KC_LOG_CONSOLE_OUTPUT: json
+
+      # Proxy settings (ha reverse proxy mögött fut)
+      KC_PROXY: edge
+
+    ports:
+      - "8443:8443"
+    volumes:
+      # Let's Encrypt SSL Certificate (PKCS12 format)
+      - ./certs/keycloak.p12:/opt/keycloak/conf/keycloak.p12:ro
+      # Realm import directory (optional)
+      - ./keycloak-backup:/opt/keycloak/data/import:ro
+    depends_on:
+      - postgres
+    networks:
+      - keycloak-network
+    restart: unless-stopped
+    # Production hardening
+    security_opt:
+      - no-new-privileges:true
+    # Health check
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f https://localhost:8443/health/ready || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  # Nginx reverse proxy (opcionális)
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs/fullchain.pem:/etc/nginx/ssl/fullchain.pem:ro
+      - ./certs/privkey.pem:/etc/nginx/ssl/privkey.pem:ro
+      # Let's Encrypt challenge directory
+      - ./certbot/www:/var/www/certbot:ro
+    depends_on:
+      - keycloak
+    networks:
+      - keycloak-network
+    restart: unless-stopped
+
+  # Certbot for automatic cert renewal
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certs:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+volumes:
+  postgres_data_prod:
+    driver: local
+
+networks:
+  keycloak-network:
+    driver: bridge

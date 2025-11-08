@@ -78,7 +78,9 @@ public class SecurityConfig {
     @Bean
     @Profile("dev")
     public JwtDecoder jwtDecoderDev() {
-        System.out.println("⚠️  WARNING: SSL certificate validation is DISABLED for development!");
+        // Log warning about disabled SSL verification in development
+        org.slf4j.LoggerFactory.getLogger(SecurityConfig.class)
+                .warn("SSL certificate validation is DISABLED for development!");
 
         // Disable SSL verification for development
         try {

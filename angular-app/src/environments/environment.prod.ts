@@ -1,7 +1,10 @@
 export const environment = {
   production: true,
+  // PRODUCTION: Frissítsd a saját domain nevedre!
+  apiUrl: 'https://api.varganet.cloud',
   keycloak: {
-    url: 'https://your-production-domain.com',
+    // Példa: https://auth.varganet.cloud
+    url: 'https://auth.varganet.cloud',
     realm: 'biometric-2fa',
     clientId: 'angular-app'
   }

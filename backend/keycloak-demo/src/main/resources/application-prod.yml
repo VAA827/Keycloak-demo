@@ -3,8 +3,10 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: https://your-production-domain.com/realms/biometric-2fa
-          jwk-set-uri: https://your-production-domain.com/realms/biometric-2fa/protocol/openid-connect/certs
+          # PRODUCTION: Frissítsd a saját domain nevedre!
+          # Példa: https://auth.varganet.cloud
+          issuer-uri: https://auth.varganet.cloud/realms/biometric-2fa
+          jwk-set-uri: https://auth.varganet.cloud/realms/biometric-2fa/protocol/openid-connect/certs
 
 logging:
   level:

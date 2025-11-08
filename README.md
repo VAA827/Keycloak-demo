@@ -101,6 +101,8 @@ On first login:
 |----------|-------------|------|
 | [ADMIN-CONSOLE-GUIDE.md](ADMIN-CONSOLE-GUIDE.md) | Keycloak Admin Console complete guide | 30 min |
 | [ADMIN-SOLUTIONS-SUMMARY.md](ADMIN-SOLUTIONS-SUMMARY.md) | Admin solutions comparison | 15 min |
+| [LETSENCRYPT-PRODUCTION-SETUP.md](LETSENCRYPT-PRODUCTION-SETUP.md) | Production deployment with Let's Encrypt | 60 min |
+| [PRODUCTION-SECURITY-CHECKLIST.md](PRODUCTION-SECURITY-CHECKLIST.md) | Complete security checklist for production | 30 min |
 
 ### 👨‍💻 For Developers
 
@@ -175,7 +177,8 @@ On first login:
 
 ### 1. SSL Certificate Setup
 
-The project includes a self-signed certificate for development. For production:
+**Development (current):**
+The project includes a self-signed certificate for development.
 
 ```bash
 # Using mkcert (recommended for development)
@@ -183,6 +186,18 @@ mkcert -install
 mkcert -pkcs12 -p12-file certs/keycloak.p12 localhost
 
 # See SSL-CERT-SETUP.md for detailed instructions
+```
+
+**Production:**
+For production deployment with Let's Encrypt SSL certificate:
+
+```bash
+# See detailed production setup guide
+# LETSENCRYPT-PRODUCTION-SETUP.md - Complete step-by-step guide
+# PRODUCTION-SECURITY-CHECKLIST.md - Security best practices
+
+# Quick start:
+docker-compose -f docker-compose.prod.yaml --env-file .env.prod up -d
 ```
 
 ### 2. Keycloak Environment

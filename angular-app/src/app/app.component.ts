@@ -2,6 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink } from '@angular/router';
 import { KeycloakService } from 'keycloak-angular';
+import { UserService } from './services/user.service';
+import { LoggerService } from './services/logger.service';
+import { LOG_PREFIXES } from './constants/app.constants';
 
 @Component({
   selector: 'app-root',
@@ -16,73 +19,65 @@ export class AppComponent implements OnInit {
   username = '';
   isAdmin = false;
 
-  constructor(private keycloak: KeycloakService) {}
+  constructor(
+    private keycloak: KeycloakService,
+    private userService: UserService,
+    private logger: LoggerService
+  ) {}
 
-  async ngOnInit() {
-    console.log('🚀 APP: ngOnInit');
+  async ngOnInit(): Promise<void> {
+    this.logger.info(LOG_PREFIXES.APP, 'ngOnInit');
     await this.updateLoginStatus();
   }
 
-  async updateLoginStatus() {
+  async updateLoginStatus(): Promise<void> {
     try {
-      this.isLoggedIn = await this.keycloak.isLoggedIn();
-      console.log('APP: isLoggedIn =', this.isLoggedIn);
+      this.isLoggedIn = await this.userService.isLoggedIn();
+      this.logger.info(LOG_PREFIXES.APP, 'isLoggedIn =', this.isLoggedIn);
 
       if (this.isLoggedIn) {
-        await this.loadUserInfo();
+        this.loadUserInfo();
       } else {
-        console.log('APP: Not logged in');
-        this.username = '';
-        this.isAdmin = false;
+        this.logger.info(LOG_PREFIXES.APP, 'Not logged in');
+        this.resetUserInfo();
       }
     } catch (error) {
-      console.error('APP: Error in updateLoginStatus:', error);
-      this.isLoggedIn = false;
-      this.username = '';
-      this.isAdmin = false;
+      this.logger.error('APP: Error in updateLoginStatus:', error);
+      this.resetUserInfo();
     }
   }
 
-  async loadUserInfo() {
-    console.log('APP: Loading user info...');
+  private loadUserInfo(): void {
+    this.logger.info(LOG_PREFIXES.APP, 'Loading user info...');
 
     try {
-      // Közvetlenül a tokenből olvassuk ki az adatokat (CORS probléma elkerülése)
-      const keycloakInstance = this.keycloak.getKeycloakInstance();
-      if (keycloakInstance.tokenParsed) {
-        const token = keycloakInstance.tokenParsed as any;
+      const userInfo = this.userService.getUserInfoFromToken();
+      this.username = userInfo.username;
+      this.isAdmin = userInfo.isAdmin;
 
-        // Username betöltése
-        this.username = token.preferred_username || token.name || token.email || 'Felhasználó';
-
-        // Admin role ellenőrzése
-        const realmAccess = token.realm_access;
-        this.isAdmin = realmAccess?.roles?.includes('ADMIN') || false;
-
-        console.log('APP: User loaded from token:');
-        console.log('  - Username:', this.username);
-        console.log('  - Email:', token.email);
-        console.log('  - Name:', token.name);
-        console.log('  - Roles:', realmAccess?.roles);
-        console.log('  - Is Admin:', this.isAdmin);
-      } else {
-        console.error('APP: No token available');
-        this.username = 'Felhasználó';
-        this.isAdmin = false;
-      }
+      this.logger.info(LOG_PREFIXES.APP, 'User loaded from token:');
+      this.logger.debug('  - Username:', userInfo.username);
+      this.logger.debug('  - Email:', userInfo.email);
+      this.logger.debug('  - Roles:', userInfo.roles);
+      this.logger.debug('  - Is Admin:', userInfo.isAdmin);
     } catch (error) {
-      console.error('APP: Failed to load user info:', error);
-      this.username = 'Felhasználó';
-      this.isAdmin = false;
+      this.logger.error('APP: Failed to load user info:', error);
+      this.resetUserInfo();
     }
   }
 
-  async logout() {
-    console.log('APP: Logout');
+  private resetUserInfo(): void {
+    this.isLoggedIn = false;
+    this.username = '';
+    this.isAdmin = false;
+  }
+
+  async logout(): Promise<void> {
+    this.logger.info(LOG_PREFIXES.APP, 'Logout');
     try {
       await this.keycloak.logout(window.location.origin);
     } catch (error) {
-      console.error('APP: Logout error:', error);
+      this.logger.error('APP: Logout error:', error);
     }
   }
 }

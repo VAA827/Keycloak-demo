@@ -2,6 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api.service';
 import { KeycloakService } from 'keycloak-angular';
+import { UserService } from '../../services/user.service';
+import { LoggerService } from '../../services/logger.service';
+import { ProfileData } from '../../models/user.model';
+import { LOG_PREFIXES, DEFAULT_VALUES } from '../../constants/app.constants';
 
 @Component({
   selector: 'app-profile',
@@ -11,73 +15,64 @@ import { KeycloakService } from 'keycloak-angular';
   styleUrl: './profile.component.scss'
 })
 export class ProfileComponent implements OnInit {
-  profileData: any = null;
+  profileData: ProfileData | null = null;
   username = '';
   email = '';
   roles: string[] = [];
 
   constructor(
     private apiService: ApiService,
-    private keycloak: KeycloakService
+    private keycloak: KeycloakService,
+    private userService: UserService,
+    private logger: LoggerService
   ) {}
 
-  async ngOnInit() {
-    console.log('👤 PROFILE: Component initialized');
-    await this.loadUserInfo();
+  async ngOnInit(): Promise<void> {
+    this.logger.info(LOG_PREFIXES.PROFILE, 'Component initialized');
+    this.loadUserInfo();
     this.loadBackendProfile();
   }
 
-  async loadUserInfo() {
+  private loadUserInfo(): void {
     try {
-      // Közvetlenül a tokenből olvassuk ki az adatokat (CORS probléma elkerülése)
-      const keycloakInstance = this.keycloak.getKeycloakInstance();
-      if (keycloakInstance.tokenParsed) {
-        const token = keycloakInstance.tokenParsed as any;
+      const userInfo = this.userService.getUserInfoFromToken();
 
-        this.username = token.preferred_username || token.name || 'Nem elérhető';
-        this.email = token.email || 'Nem elérhető';
+      this.username = userInfo.username;
+      this.email = userInfo.email;
+      this.roles = userInfo.roles;
 
-        const realmAccess = token.realm_access;
-        this.roles = realmAccess?.roles || [];
-
-        console.log('PROFILE: User info loaded from token:');
-        console.log('  - Username:', this.username);
-        console.log('  - Email:', this.email);
-        console.log('  - Roles:', this.roles);
-      } else {
-        console.error('PROFILE: No token available');
-        this.username = 'Nem elérhető';
-        this.email = 'Nem elérhető';
-        this.roles = [];
-      }
+      this.logger.info(LOG_PREFIXES.PROFILE, 'User info loaded from token:');
+      this.logger.debug('  - Username:', this.username);
+      this.logger.debug('  - Email:', this.email);
+      this.logger.debug('  - Roles:', this.roles);
     } catch (error) {
-      console.error('PROFILE: Error loading user info:', error);
-      this.username = 'Hiba';
-      this.email = 'Hiba';
+      this.logger.error('PROFILE: Error loading user info:', error);
+      this.username = DEFAULT_VALUES.ERROR_USERNAME;
+      this.email = DEFAULT_VALUES.FALLBACK_EMAIL;
       this.roles = [];
     }
   }
 
-  loadBackendProfile() {
-    console.log('📡 PROFILE: Loading backend profile...');
+  private loadBackendProfile(): void {
+    this.logger.info(LOG_PREFIXES.PROFILE, 'Loading backend profile...');
     this.apiService.getUserProfile().subscribe({
       next: (data) => {
-        console.log('PROFILE: Backend data received:', data);
+        this.logger.info(LOG_PREFIXES.PROFILE, 'Backend data received:', data);
         this.profileData = data;
       },
       error: (err) => {
-        console.error('PROFILE: Error loading backend data:', err);
-        this.profileData = { error: 'Nem sikerült betölteni' };
+        this.logger.error('PROFILE: Error loading backend data:', err);
+        this.profileData = null;
       }
     });
   }
 
-  async logout() {
-    console.log('🚪 PROFILE: Logout button clicked');
+  async logout(): Promise<void> {
+    this.logger.info(LOG_PREFIXES.PROFILE, 'Logout button clicked');
     try {
       await this.keycloak.logout(window.location.origin);
     } catch (error) {
-      console.error('PROFILE: Error during logout:', error);
+      this.logger.error('PROFILE: Error during logout:', error);
     }
   }
 }
